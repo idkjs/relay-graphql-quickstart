@@ -1,5 +1,5 @@
 {
-  "name": "relay-js-quickstart",
+  "name": "relay-graphql-quickstart",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
