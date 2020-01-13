@@ -266,3 +266,6 @@ export default AppRoot;
 
 *Note that you'll have to restart the app - yarn start - so that Relay compiler can see the new query and generate code for it. See the Relay Compiler setup docs for how to run Relay Compiler in watch mode, to regenerate code as you modify queries.*
 
+Everything above comes from the [Relay-JS-Experimenatal Docs](https://relay.dev/docs/en/experimental/step-by-step)
+
+Next we will try implementing this example with [Reason-Relay](https://reason-relay-documentation.zth.now.sh)
