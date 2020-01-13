@@ -1,7 +1,7 @@
 module Query = [%relay.query
   {|
       query AppWithPreloadQuery {
-      repository(owner: "facebook", name: "relay") {
+      repository(owner: "zth", name: "reason-relay") {
         name
       }
     }
@@ -35,12 +35,9 @@ let make = () => {
   });
 
   <>
-    <ReactExperimental.Suspense
-      fallback={<div> {React.string("Loading...")} </div>}>
-      {switch (preloadToken) {
-       | Some(preloadToken) => <TestPreloaded preloadToken />
-       | None => React.null
-       }}
-    </ReactExperimental.Suspense>
+    {switch (preloadToken) {
+     | Some(preloadToken) => <TestPreloaded preloadToken />
+     | None => React.null
+     }}
   </>;
 };

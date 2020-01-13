@@ -46,12 +46,12 @@ var v0 = [
   {
     "kind": "Literal",
     "name": "name",
-    "value": "relay"
+    "value": "reason-relay"
   },
   {
     "kind": "Literal",
     "name": "owner",
-    "value": "facebook"
+    "value": "zth"
   }
 ],
 v1 = {
@@ -74,7 +74,7 @@ return {
         "kind": "LinkedField",
         "alias": null,
         "name": "repository",
-        "storageKey": "repository(name:\"relay\",owner:\"facebook\")",
+        "storageKey": "repository(name:\"reason-relay\",owner:\"zth\")",
         "args": (v0/*: any*/),
         "concreteType": "Repository",
         "plural": false,
@@ -93,7 +93,7 @@ return {
         "kind": "LinkedField",
         "alias": null,
         "name": "repository",
-        "storageKey": "repository(name:\"relay\",owner:\"facebook\")",
+        "storageKey": "repository(name:\"reason-relay\",owner:\"zth\")",
         "args": (v0/*: any*/),
         "concreteType": "Repository",
         "plural": false,
@@ -114,7 +114,7 @@ return {
     "operationKind": "query",
     "name": "AppWithPreloadQuery",
     "id": null,
-    "text": "query AppWithPreloadQuery {\n  repository(owner: \"facebook\", name: \"relay\") {\n    name\n    id\n  }\n}\n",
+    "text": "query AppWithPreloadQuery {\n  repository(owner: \"zth\", name: \"reason-relay\") {\n    name\n    id\n  }\n}\n",
     "metadata": {}
   }
 };

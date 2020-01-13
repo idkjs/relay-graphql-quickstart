@@ -4,7 +4,6 @@ var Curry = require("bs-platform/lib/js/curry.js");
 var React = require("react");
 var Caml_option = require("bs-platform/lib/js/caml_option.js");
 var ReasonRelay = require("reason-relay/src/ReasonRelay.bs.js");
-var ReactExperimental = require("reason-relay/src/ReactExperimental.bs.js");
 var AppWithPreloadQuery_graphql$ReasonReactExamples = require("./__generated__/AppWithPreloadQuery_graphql.bs.js");
 
 var convertResponse = AppWithPreloadQuery_graphql$ReasonReactExamples.Internal.convertResponse;
@@ -60,12 +59,9 @@ function AppWithPreload(Props) {
                 }));
           return ;
         }), ([]));
-  return React.createElement(React.Fragment, undefined, React.createElement(ReactExperimental.Suspense.make, {
-                  children: preloadToken !== undefined ? React.createElement(AppWithPreload$TestPreloaded, {
-                          preloadToken: Caml_option.valFromOption(preloadToken)
-                        }) : null,
-                  fallback: React.createElement("div", undefined, "Loading...")
-                }));
+  return React.createElement(React.Fragment, undefined, preloadToken !== undefined ? React.createElement(AppWithPreload$TestPreloaded, {
+                    preloadToken: Caml_option.valFromOption(preloadToken)
+                  }) : null);
 }
 
 var make = AppWithPreload;

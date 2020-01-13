@@ -17,6 +17,7 @@ module Query = [%relay.query
 
 [@react.component]
 let make = () => {
+    /* use is a React hook that will dispatch the query to the server and then deliver the data to the component. */
   let query = Query.use(~variables=(), ());
   <div className="App">
     <header className="App-header">

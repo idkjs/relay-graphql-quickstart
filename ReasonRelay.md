@@ -269,6 +269,7 @@ Our `query` variable returns and option which we handle with a `switch` statemen
     | None => <div> {React.string("Nothing to see here")} </div>
   }}
 ```
+
 An important note is that ReasonRelay uses `React.Suspense` by default
 So all together, `Main.re` should look like this:
 
@@ -286,6 +287,7 @@ module Query = [%relay.query
 
 [@react.component]
 let make = () => {
+  /* use is a React hook that will dispatch the query to the server and then deliver the data to the component. */
   let query = Query.use(~variables=(), ());
   <div className="App">
     <header className="App-header">
@@ -297,3 +299,135 @@ let make = () => {
   </div>;
 };
 ```
+
+## Preloaded Queries
+
+The astute observer will have noticed that the `js` example used a [`preloaded query`](https://relay.dev/docs/en/experimental/api-reference#preloadquery) and our `Main.re` component did not. That is because I am just not figuring this out with you as I am writing this and that is the version that I got working first. But being stubborn I had to get the `preloaded query` to work with ReasonRelay. As an aside, my goto way to figure out how something works is to got to the project repository and search the tests for the function call. That is what I did here and figured it out with the help of [Test_query.re](https://github.com/zth/reason-relay/blob/master/packages/reason-relay/__tests__/Test_query.re).
+
+The first I did was `touch src/AppWithPreload` then added the same query as we used in `Main.re` taking care to change the name so that it matches the `file_name` + `graphql_operation` format.
+
+```ocaml
+module Query = [%relay.query
+  {|
+      query AppWithPreloadQuery {
+      repository(owner: "zth", name: "reason-relay") {
+        name
+      }
+    }
+    |}
+];
+```
+
+We then add a module that has a react component that take a `preloadToken` prop. `TestPreloaded` will then use the `preloadToken` in executing the graphql query defined in this file. Per the reason-relay [docs on preloaded queries](https://reason-relay-documentation.zth.now.sh/docs/making-queries#preloaded-queries), "preloaded queries means that you start preloading your query as soon as you can, rather than waiting for UI to render just to trigger a query".
+
+> Please read [this section of the Relay docs](https://relay.dev/docs/en/experimental/api-reference#usepreloadedquery) for a more thorough overview of preloaded queries.
+
+> In ReasonRelay, every [%relay.query] node automatically generates a preload function that you can call with the same parameters as the use hook (plus passing your environment, as preload runs outside of React's context). Preload gives you back a reference, which you can then pass to Query.usePreloaded(reference). This will either suspend the component (if the data's not ready) or render it right away if the data's already there.
+
+So ⬆️is why you do it.
+
+```ocaml
+module TestPreloaded = {
+  [@react.component]
+  let make = (~preloadToken) => {
+    let query = Query.usePreloaded(preloadToken);
+    let repositoryName =
+      switch (query.repository) {
+      | Some(repository) => repository.name
+      | None => "Nothing Preloaded"
+      };
+
+    <div> {React.string("Preloaded " ++ repositoryName)} </div>;
+  };
+};
+```
+
+The `Query.preload` function has the following type:
+
+```ocaml
+(
+  ~environment: ReasonRelay.Environment.t,
+  ~variables: Query.Operation.variables,
+  ~fetchPolicy: option(
+    ReasonRelay.fetchPolicy
+  ),
+  ~fetchKey: option(string),
+  ~networkCacheConfig: option(
+    ReasonRelay.cacheConfig
+  ),
+  unit
+) => Query.UseQuery.preloadToken
+```
+
+So we are going to have to pass it at least the required arguments of `environment` of type `ReasonRelay.Environment.t` and `variables` of type `Query.Operation.variables`.
+
+We will get the `ReasonRelay.Environemnt` by calling its `usseEnvironmentFromContext()` method.
+
+We do that in the `AppWithPreload`'s default component.
+
+```ocaml
+[@react.component]
+let make = () => {
+  let environment = ReasonRelay.useEnvironmentFromContext();
+
+  let (preloadToken, setPreloadToken) = React.useState(() => None);
+  /* get the token with a React.useEffect call which sets the `preloadToken` to the result of `Query.preload(~environment, ~variables=(), ())`
+  ```*/
+  React.useEffect0(() => {
+    setPreloadToken(_ =>
+      Some(Query.preload(~environment, ~variables=(), ()))
+    )
+    |> ignore;
+
+    None;
+  });
+/* once we have the token we pass it to <TestPreload > which will wait for the data to be ready before it renders the div. */
+  <>
+    {switch (preloadToken) {
+     | Some(preloadToken) => <TestPreloaded preloadToken />
+     | None => React.null
+     }}
+  </>;
+};
+```
+
+What are we doing here?
+
+We set a state variable to handle our preloadToken value:
+
+```ocaml
+let (preloadToken, setPreloadToken) = React.useState(() => None);
+```
+
+We get the token with a `React.useEffect` call which sets the `preloadToken` state variable to the result of `Query.preload(~environment, ~variables=(), ())`
+
+  ```ocaml
+  React.useEffect0(() => {
+    setPreloadToken(_ =>
+      Some(Query.preload(~environment, ~variables=(), ()))
+    )
+    |> ignore;
+
+    None;
+  });
+```
+
+Then if `preloadToken` is ever `Some(value)`, we pass it to `TestPreload` which will wait for the data to be ready before it renders the div.
+
+```ocaml
+  <>
+    {switch (preloadToken) {
+     | Some(preloadToken) => <TestPreloaded preloadToken />
+     | None => React.null
+     }}
+  </>;
+```
+
+Something about this seems redundant to me but this works for now.
+
+Tell me why I am wrong and how this could be improved in the comments.
+
+I hope this helps you as much as it helped me.
+
+Not for nothing, the work on `ReasonRelay` by [Gabriel Nordeborn](https://twitter.com/___zth___) is so serious. Thanks for sharing, sir.
+
