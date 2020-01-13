@@ -1,37 +1,47 @@
-/**
- * @flow
- * @relayHash 03d5ac54945052b561cb5ba3c07668e7
- */
+/* @generated */
 
-/* eslint-disable */
+module Unions = {};
 
-'use strict';
+module Types = {
+  type repository = {name: string};
+};
 
-/*::
-import type { ConcreteRequest } from 'relay-runtime';
-export type AppRepositoryNameQueryVariables = {||};
-export type AppRepositoryNameQueryResponse = {|
-  +repository: ?{|
-    +name: string
-  |}
-|};
-export type AppRepositoryNameQuery = {|
-  variables: AppRepositoryNameQueryVariables,
-  response: AppRepositoryNameQueryResponse,
-|};
-*/
+open Types;
 
+type response = {repository: option(repository)};
+type variables = unit;
 
-/*
-query AppRepositoryNameQuery {
-  repository(owner: "facebook", name: "relay") {
-    name
-    id
-  }
-}
-*/
+module FragmentConverters: {} = {};
 
-const node/*: ConcreteRequest*/ = (function(){
+module Internal = {
+  type responseRaw;
+  let responseConverter: Js.Dict.t(array((int, string))) = [%raw
+    {| {"repository":[[0,""]]} |}
+  ];
+  let responseConverterMap = ();
+  let convertResponse = v =>
+    v
+    ->ReasonRelay._convertObj(
+        responseConverter,
+        responseConverterMap,
+        Js.undefined,
+      );
+
+  let variablesConverter: Js.Dict.t(array((int, string))) = [%raw {| {} |}];
+  let variablesConverterMap = ();
+  let convertVariables = v =>
+    v
+    ->ReasonRelay._convertObj(
+        variablesConverter,
+        variablesConverterMap,
+        Js.undefined,
+      );
+};
+
+type operationType = ReasonRelay.queryNode;
+
+let node: operationType = [%bs.raw
+  {| (function(){
 var v0 = [
   {
     "kind": "Literal",
@@ -55,7 +65,7 @@ return {
   "kind": "Request",
   "fragment": {
     "kind": "Fragment",
-    "name": "AppRepositoryNameQuery",
+    "name": "MainQuery",
     "type": "Query",
     "metadata": null,
     "argumentDefinitions": [],
@@ -76,7 +86,7 @@ return {
   },
   "operation": {
     "kind": "Operation",
-    "name": "AppRepositoryNameQuery",
+    "name": "MainQuery",
     "argumentDefinitions": [],
     "selections": [
       {
@@ -102,13 +112,11 @@ return {
   },
   "params": {
     "operationKind": "query",
-    "name": "AppRepositoryNameQuery",
+    "name": "MainQuery",
     "id": null,
-    "text": "query AppRepositoryNameQuery {\n  repository(owner: \"facebook\", name: \"relay\") {\n    name\n    id\n  }\n}\n",
+    "text": "query MainQuery {\n  repository(owner: \"facebook\", name: \"relay\") {\n    name\n    id\n  }\n}\n",
     "metadata": {}
   }
 };
-})();
-// prettier-ignore
-(node/*: any*/).hash = '9f041295559a43de4cee97435d379fd0';
-module.exports = node;
+})() |}
+];
