@@ -1,68 +1,115 @@
+# [RelayJS: A Step By Step Guide](https://relay.dev/docs/en/experimental/step-by-step)
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## Step 1: Create React App
 
-In the project directory, you can run:
+For this example we'll use start with a standard install of Create React App ("CRA"). Create React App makes it easy to get a fully configured React app up and running and also supports configuring Relay. To get started, create a new app with:
 
-### `yarn start`
+```sh
+pnpx create-react-app your-app-name
+```
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Step 2: Fetch GraphQL (without Relay)
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+If you're exploring using GraphQL with Relay, we highly recommend starting with a basic approach and using as few libraries as possible. GraphQL servers can generally be accessed using plain-old HTTP requests, so we can use the fetch API to request some data from our server. For this guide we'll use GitHub's GraphQL API as the server, but if you already have a GraphQL server feel free to use that instead.
 
-### `yarn test`
+2.1: GitHub GraphQL Authentication
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+To start we'll need an authentication token for the GitHub API (if you're using your own GraphQL endpoint, you can skip this step):
 
-### `yarn build`
+Open <https://github.com/settings/tokens.>
+Ensure that at least the repo scope is selected.
+Generate a token
+Create a file ./your-app-name/.env.local and add the following contents, replacing <TOKEN> with your authentication token:
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```sh
+# your-app-name/.env.local
+REACT_APP_GITHUB_AUTH_TOKEN=<TOKEN>
+2.2: A fetchGraphQL Helper
+```
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+Next let's update the home screen of our app to show the name of the Relay repository. We'll start with a common approach to fetching data in React, calling our fetch function after the component mounts (note: later we'll see some limitations of this approach and a better alternative that works with React Concurrent Mode and Suspense). First we'll create a helper function to load data from the server. Again, this example will use the GitHub API, but feel free to replace it with the appropriate URL and authentication mechanism for your own GraphQL server:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```js
+// your-app-name/src/fetchGraphQL.js
+async function fetchGraphQL(text, variables) {
+  const REACT_APP_GITHUB_AUTH_TOKEN = process.env.REACT_APP_GITHUB_AUTH_TOKEN;
 
-### `yarn eject`
+  // Fetch data from GitHub's GraphQL API:
+  const response = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `bearer ${REACT_APP_GITHUB_AUTH_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: text,
+      variables,
+    }),
+  });
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  // Get the response as JSON
+  return await response.json();
+}
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+export default fetchGraphQL;
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+2.3: Fetching GraphQL From React
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Now we can use our fetchGraphQL function to fetch some data in our app. Open src/App.js and edit it as follows:
 
-## Learn More
+```js
+// your-app-name/src/App.js
+import React from 'react';
+import './App.css';
+import fetchGraphQL from './fetchGraphQL';
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const { useState, useEffect } = React;
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+function App() {
+  // We'll load the name of a repository, initially setting it to null
+  const [name, setName] = useState(null);
 
-### Code Splitting
+  // When the component mounts we'll fetch a repository name
+  useEffect(() => {
+    let isMounted = true;
+    fetchGraphQL(`
+      query RepositoryNameQuery {
+        # feel free to change owner/name here
+        repository(owner: "facebook" name: "relay") {
+          name
+        }
+      }
+    `).then(response => {
+      // Avoid updating state if the component unmounted before the fetch completes
+      if (!isMounted) {
+        return;
+      }
+      const data = response.data;
+      setName(data.repository.name);
+    }).catch(error => {
+      console.error(error);
+    });
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchGraphQL]);
 
-### Analyzing the Bundle Size
+  // Render "Loading" until the query completes
+  return (
+    <div className="App">
+      <header className="App-header">
+        <p>
+          {name != null ? `Repository: ${name}` : "Loading"}
+        </p>
+      </header>
+    </div>
+  );
+}
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+export default App;
+```
 
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
