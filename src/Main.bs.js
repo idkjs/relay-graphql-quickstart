@@ -3,6 +3,7 @@
 var Curry = require("bs-platform/lib/js/curry.js");
 var React = require("react");
 var ReasonRelay = require("reason-relay/src/ReasonRelay.bs.js");
+var AppWithPreload$ReasonReactExamples = require("./AppWithPreload.bs.js");
 var MainQuery_graphql$ReasonReactExamples = require("./__generated__/MainQuery_graphql.bs.js");
 
 ((require("./App.css")));
@@ -42,7 +43,7 @@ function Main(Props) {
               className: "App"
             }, React.createElement("header", {
                   className: "App-header"
-                }, match !== undefined ? React.createElement("p", undefined, match.name) : React.createElement("p", undefined, "Nothing to see here")));
+                }, match !== undefined ? React.createElement("p", undefined, match.name) : React.createElement("p", undefined, "Nothing to see here"), React.createElement(AppWithPreload$ReasonReactExamples.make, { })));
 }
 
 var make = Main;
