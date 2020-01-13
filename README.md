@@ -1,4 +1,4 @@
-# [RelayJS: A Step By Step Guide](https://relay.dev/docs/en/experimental/step-by-step)
+# [RelayJS-Expirimental: A Step By Step Guide](https://relay.dev/docs/en/experimental/step-by-step)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
@@ -7,24 +7,24 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 For this example we'll use start with a standard install of Create React App ("CRA"). Create React App makes it easy to get a fully configured React app up and running and also supports configuring Relay. To get started, create a new app with:
 
 ```sh
-pnpx create-react-app your-app-name
+pnpx create-react-app relay-js-quickstart
 ```
 
 ## Step 2: Fetch GraphQL (without Relay)
 
 If you're exploring using GraphQL with Relay, we highly recommend starting with a basic approach and using as few libraries as possible. GraphQL servers can generally be accessed using plain-old HTTP requests, so we can use the fetch API to request some data from our server. For this guide we'll use GitHub's GraphQL API as the server, but if you already have a GraphQL server feel free to use that instead.
 
-2.1: GitHub GraphQL Authentication
+### 2.1: GitHub GraphQL Authentication
 
 To start we'll need an authentication token for the GitHub API (if you're using your own GraphQL endpoint, you can skip this step):
 
 Open <https://github.com/settings/tokens.>
 Ensure that at least the repo scope is selected.
 Generate a token
-Create a file ./your-app-name/.env.local and add the following contents, replacing <TOKEN> with your authentication token:
+Create a file ./relay-js-quickstart/.env.local and add the following contents, replacing <TOKEN> with your authentication token:
 
 ```sh
-# your-app-name/.env.local
+# relay-js-quickstart/.env.local
 REACT_APP_GITHUB_AUTH_TOKEN=<TOKEN>
 2.2: A fetchGraphQL Helper
 ```
@@ -32,7 +32,7 @@ REACT_APP_GITHUB_AUTH_TOKEN=<TOKEN>
 Next let's update the home screen of our app to show the name of the Relay repository. We'll start with a common approach to fetching data in React, calling our fetch function after the component mounts (note: later we'll see some limitations of this approach and a better alternative that works with React Concurrent Mode and Suspense). First we'll create a helper function to load data from the server. Again, this example will use the GitHub API, but feel free to replace it with the appropriate URL and authentication mechanism for your own GraphQL server:
 
 ```js
-// your-app-name/src/fetchGraphQL.js
+// relay-js-quickstart/src/fetchGraphQL.js
 async function fetchGraphQL(text, variables) {
   const REACT_APP_GITHUB_AUTH_TOKEN = process.env.REACT_APP_GITHUB_AUTH_TOKEN;
 
@@ -56,12 +56,12 @@ async function fetchGraphQL(text, variables) {
 export default fetchGraphQL;
 ```
 
-2.3: Fetching GraphQL From React
+### 2.3: Fetching GraphQL From React
 
 Now we can use our fetchGraphQL function to fetch some data in our app. Open src/App.js and edit it as follows:
 
 ```js
-// your-app-name/src/App.js
+// relay-js-quickstart/src/App.js
 import React from 'react';
 import './App.css';
 import fetchGraphQL from './fetchGraphQL';
@@ -113,3 +113,82 @@ function App() {
 export default App;
 ```
 
+## [Step 3: When To Use Relay](https://relay.dev/docs/en/experimental/step-by-step#step-3-when-to-use-relay)
+
+> At this point we can fetch data with GraphQL and render it with React. This is a reasonable solution that can be sufficient for many apps. However, this approach doesn't necessarily scale. As our app grows in size and complexity, or the number of people working on the app grows, a simple approach like this can become limiting. Relay provides a number of features designed to help keep applications fast and reliable even as they grow in size and complexity: colocating data dependencies in components with GraphQL fragments, data consistency, mutations, etc. Check out Thinking in GraphQL and Thinking in Relay for an overview of how Relay makes it easier to work with GraphQL.
+
+## Step 4: Adding Relay To Our Project
+
+In this guide we'll demonstrate installing the experimental release of Relay Hooks, a new, hooks-based Relay API that supports React Concurrent Mode and Suspense.
+
+First we'll add the necessary packages. Note that Relay is comprised of three key pieces:
+
+1. A compiler (which is used at build time)
+2. A core runtime (that is React agnostic)
+3. A React integration layer.
+
+```sh
+pnpm install --save relay-runtime react-relay@experimental
+pnpm install --save-dev relay-compiler graphql babel-plugin-relay
+```
+
+Note: You may get a notice asking you to choose which version of relay-runtime to use - if so, specify version 7.0.x (e.g. 7.0.0).
+
+### 4.1 Configure Relay Compiler
+
+Next let's configure Relay compiler. We'll need a copy of the schema as a .graphql file. If you're using the GitHub GraphQL API, you can download a copy directly from the Relay example app:
+
+```sh
+cd relay-js-quickstart
+curl https://raw.githubusercontent.com/relayjs/relay-examples/master/issue-tracker/schema/schema.graphql > schema.graphql
+```
+
+If you're using your own API we suggest using the get-graphql-schema utility to download your schema into a .graphql file.
+
+Now that we have a schema we can modify package.json to run the compiler first whenever we build or start our app:
+
+```json
+// relay-js-quickstart/package.json
+{
+  ...
+  "scripts": {
+    ...
+    "start": "yarn run relay && react-scripts start",
+    "build": "yarn run relay && react-scripts build",
+    "relay": "yarn run relay-compiler --schema schema.graphql --src ./src/ --watchman false $@"
+    ...
+  },
+  ...
+}
+```
+
+At this point, you should be able to run the following successfully:
+
+```sh
+cd relay-js-quickstart
+yarn start
+If it works, your app will open at localhost:3000. Now when we write GraphQL in our app, Relay will detect it and generate code to represent our queries in relay-js-quickstart/src/__generated__/. We recommend checking in these generated files to source control.
+```
+
+### 4.2 Configure Relay Runtime
+
+Now that the compiler is configured we can set up the runtime - we have to tell Relay how to connect to our GraphQL server. We'll reuse the fetchGraphQL utility we built above. Assuming you haven't modified it (or at least that it still takes text and variables as arguments), we can now define a Relay Environment. An Environment encapsulates how to talk to our server (a Relay Network) with a cache of data retrieved from that server. We'll create a new file, src/RelayEnvironment.js and add the following:
+
+```js
+// relay-js-quickstart/src/RelayEnvironment.js
+import { Environment, Network, RecordSource, Store } from 'relay-runtime';
+import fetchGraphQL from './fetchGraphQL';
+
+// Relay passes a "params" object with the query name and text. So we define a helper function
+// to call our fetchGraphQL utility with params.text.
+async function fetchRelay(params, variables) {
+  console.log(`fetching query ${params.name} with ${JSON.stringify(variables)}`);
+  return fetchGraphQL(params.text, variables);
+}
+
+// Export a singleton instance of Relay Environment configured with our network function:
+export default new Environment({
+  network: Network.create(fetchRelay),
+  store: new Store(new RecordSource()),
+});
+```
