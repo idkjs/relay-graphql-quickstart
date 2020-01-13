@@ -4,7 +4,7 @@
  * how we handle our loading state.
  */
 
-// import App.css
+// import App.css styles
 [%bs.raw {|require("./App.css")|}];
 module Query = [%relay.query
   {|

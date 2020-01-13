@@ -4,8 +4,6 @@ var React = require("react");
 var ReactExperimental = require("reason-relay/src/ReactExperimental.bs.js");
 var Main$ReasonReactExamples = require("./Main.bs.js");
 
-((require('./App.css')));
-
 function App(Props) {
   return React.createElement(ReactExperimental.Suspense.make, {
               children: React.createElement(Main$ReasonReactExamples.make, { }),
@@ -16,4 +14,4 @@ function App(Props) {
 var make = App;
 
 exports.make = make;
-/*  Not a pure module */
+/* react Not a pure module */

@@ -10,8 +10,11 @@ exception Graphql_error(string);
  * Get the `REACT_APP_GITHUB_AUTH_TOKEN` from process.env
  */
 let react_app_github_auth_token = Sys.getenv("REACT_APP_GITHUB_AUTH_TOKEN");
+/**
+ * Create a Bearer string to pass to authorization in `fetchWithInit`
+ */
 let authorization = "Bearer " ++ react_app_github_auth_token;
-Js.log2("authorization", authorization);
+// Js.log2("authorization", authorization);
 let fetchQuery: ReasonRelay.Network.fetchFunctionPromise =
   (operation, variables, _cacheConfig) =>
     Fetch.(

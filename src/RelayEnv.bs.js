@@ -13,8 +13,6 @@ var react_app_github_auth_token = Caml_sys.caml_sys_getenv("REACT_APP_GITHUB_AUT
 
 var authorization = "Bearer " + react_app_github_auth_token;
 
-console.log("authorization", authorization);
-
 function fetchQuery(operation, variables, _cacheConfig) {
   return fetch("https://api.github.com/graphql", Fetch.RequestInit.make(/* Post */2, {
                       authorization: authorization,

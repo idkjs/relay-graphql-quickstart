@@ -125,11 +125,23 @@ exception Graphql_error(string);
  * A standard fetch that sends our operation and variables to the
  * GraphQL server, and then decodes and returns the response.
  */
+
+/**
+ * Get the `REACT_APP_GITHUB_AUTH_TOKEN` from process.env
+ */
+let react_app_github_auth_token = Sys.getenv("REACT_APP_GITHUB_AUTH_TOKEN");
+
+/**
+ * Create a Bearer string to pass to authorization in `fetchWithInit`
+*/
+
+let authorization = "Bearer " ++ react_app_github_auth_token;
+Js.log2("authorization", authorization);
 let fetchQuery: ReasonRelay.Network.fetchFunctionPromise =
   (operation, variables, _cacheConfig) =>
     Fetch.(
       fetchWithInit(
-        "http://localhost:4000/graphql",
+        "https://api.github.com/graphql",
         RequestInit.make(
           ~method=Post,
           ~body=
@@ -142,6 +154,7 @@ let fetchQuery: ReasonRelay.Network.fetchFunctionPromise =
             |> BodyInit.make,
           ~headers=
             HeadersInit.make({
+              "authorization": authorization,
               "content-type": "application/json",
               "accept": "application/json",
             }),
@@ -190,9 +203,29 @@ Here we are calling `RelayEnv.re` to get access to our ReasonRelay assets. We st
 Let create `App.re` to fix it. Run `touch src/App.re` then add this code to it:
 
 ```ocaml
+[@react.component]
+let make = () => {
+  <ReactExperimental.Suspense
+    fallback={<div> {React.string("Loading...")} </div>}>
+    <Main />
+  </ReactExperimental.Suspense>;
+};
+```
+
+While in our `js` example we inlined the second component to our `Suspense` div, the relay-compiler complained about it. Apparently she wants a React Component here so I broke out the response to `Main.re` and passed it as the second component. As soon as I figure out the details about this, I will get back here with an update. If you know why this is, please go ahead and leave a comment.
+
+And now the reason-compiler is complaining about `Main.re` so let create that too:
+
+```sh
+touch Main.re
+```
+
+and add the following:
+
+```ocaml
 module Query = [%relay.query
   {|
-    query AppQuery {
+    query MainQuery {
     repository(owner: "facebook", name: "relay") {
       name
     }
@@ -201,9 +234,9 @@ module Query = [%relay.query
 ];
 ```
 
-This is our query which is reason version of our `js` query in `App.js`. You might notice that in `App.js` its called `AppRepositoryNameQuery` and in `App.re` its called `AppQuery`. That is because, in ReasonRelay, its required that the Query name be the same as the name of the file its found in followed by what kind of query it is. That is, is it a `Mutation`, `Query`, `Subscription`, etc. I am not a genius. The reason-relay compiler told me to fix this when I copied the `js` version of the query into the `App.re`. So the query name is `this_file_name` + `type_of_graphql_operation` or `AppQuery`. The reason and reason-relay compilers are your friends. Be nice to them.
+This is our query which is reason version of our `js` query in `App.js`. You might notice that in `App.js` its called `AppRepositoryNameQuery` and in `Main.re` its called `MainQuery`. That is because, in ReasonRelay, its required that the Query name be the same as the name of the file its found in followed by what kind of query it is. That is, is it a `Mutation`, `Query`, `Subscription`, etc. I am not a genius. The reason-relay compiler told me to fix this when I copied the `js` version of the query into the `Main.re`. So the query name is `this_file_name` + `type_of_graphql_operation` or `MainQuery`. The reason and reason-relay compilers are your friends. Be nice to them.
 
-Another thing to note is that in your `src/__generated__` directory, there is now a file called `AppQuery_graphql.re` that reason-compiler generated once your wrote that query in `App.re`.
+Another thing to note is that in your `src/__generated__` directory, there is now a file called `MainQuery_graphql.re` that reason-compiler generated once your wrote that query in `App.re`.
 
 We will use the result of the query in our react component like this:
 
@@ -212,21 +245,17 @@ We will use the result of the query in our react component like this:
 let make = () => {
   let query = Query.use(~variables=(), ());
   <div className="App">
-    <div className="App-header">
-      <ReactExperimental.Suspense
-        fallback={<div> {React.string("Loading...")} </div>}>
-
-          {switch (query.repository) {
-           | Some(repository) => <div> {React.string(repository.name)} </div>
-           | None => <div> {React.string("Nothing to see here")} </div>
-           }}
-        </ReactExperimental.Suspense>
-    </div>
+    <header className="App-header">
+      {switch (query.repository) {
+       | Some(repository) => <p> {React.string(repository.name)} </p>
+       | None => <p> {React.string("Nothing to see here")} </p>
+       }}
+    </header>
   </div>;
 };
 ```
 
-We create a variable to hold the query response here:
+In our component,  we create a variable to hold the query response here:
 
 ```ocaml
   let query = Query.use(~variables=(), ());
@@ -240,13 +269,14 @@ Our `query` variable returns and option which we handle with a `switch` statemen
     | None => <div> {React.string("Nothing to see here")} </div>
   }}
 ```
-
-So all together, `App.re` should look like this:
+An important note is that ReasonRelay uses `React.Suspense` by default
+So all together, `Main.re` should look like this:
 
 ```ocaml
+[%bs.raw {|require("./App.css")|}];
 module Query = [%relay.query
   {|
-    query AppQuery {
+    query MainQuery {
     repository(owner: "facebook", name: "relay") {
       name
     }
@@ -258,17 +288,12 @@ module Query = [%relay.query
 let make = () => {
   let query = Query.use(~variables=(), ());
   <div className="App">
-    <div className="App-header">
-      <ReactExperimental.Suspense
-        fallback={<div> {React.string("Loading...")} </div>}>
-
-          {switch (query.repository) {
-           | Some(repository) => <div> {React.string(repository.name)} </div>
-           | None => <div> {React.string("Nothing to see here")} </div>
-           }}
-        </ReactExperimental.Suspense>
-    </div>
+    <header className="App-header">
+      {switch (query.repository) {
+       | Some(repository) => <p> {React.string(repository.name)} </p>
+       | None => <p> {React.string("Nothing to see here")} </p>
+       }}
+    </header>
   </div>;
 };
-
 ```

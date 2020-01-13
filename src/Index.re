@@ -1,6 +1,3 @@
-// // import index.css
-// [%bs.raw {|require("./index.css")|}];
-
 ReactExperimental.renderConcurrentRootAtElementWithId(
   <ReasonRelay.Context.Provider environment=RelayEnv.environment>
     <App />
