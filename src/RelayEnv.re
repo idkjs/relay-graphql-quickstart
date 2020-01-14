@@ -1,20 +1,21 @@
-/* RelayEnv.re */
 /* This is just a custom exception to indicate that something went wrong. */
 exception Graphql_error(string);
+exception REACT_APP_GITHUB_AUTH_TOKEN_REQUIRED;
 /**
  * A standard fetch that sends our operation and variables to the
  * GraphQL server, and then decodes and returns the response.
  */
 
-/**
- * Get the `REACT_APP_GITHUB_AUTH_TOKEN` from process.env
- */
+// get our github token
 let react_app_github_auth_token = Sys.getenv("REACT_APP_GITHUB_AUTH_TOKEN");
+  try(Sys.getenv("REACT_APP_GITHUB_AUTH_TOKEN")) {
+  | Not_found => raise(REACT_APP_GITHUB_AUTH_TOKEN_REQUIRED)
+  };
 /**
  * Create a Bearer string to pass to authorization in `fetchWithInit`
  */
 let authorization = "Bearer " ++ react_app_github_auth_token;
-// Js.log2("authorization", authorization);
+
 let fetchQuery: ReasonRelay.Network.fetchFunctionPromise =
   (operation, variables, _cacheConfig) =>
     Fetch.(

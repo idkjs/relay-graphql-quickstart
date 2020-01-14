@@ -198,7 +198,7 @@ ReactExperimental.renderConcurrentRootAtElementWithId(
 );
 ```
 
-Here we are calling `RelayEnv.re` to get access to our ReasonRelay assets. We still don't have `App.re` so if you ran `yarn watch` in a terminal, the reason compiler will be giving us an error. Run `yarn watch` to start compile your reason code to see it.
+Here we are passing `RelayEnv.re` environment to ReasonRelay's context provider to get access to our ReasonRelay assets throughout the app. We still don't have `App.re` so if you ran `yarn watch` in a terminal, the reason compiler will be giving us an error. Run `yarn watch` to start compile your reason code to see it.
 
 Let create `App.re` to fix it. Run `touch src/App.re` then add this code to it:
 
@@ -270,7 +270,8 @@ Our `query` variable returns and option which we handle with a `switch` statemen
   }}
 ```
 
-An important note is that ReasonRelay uses `React.Suspense` by default
+An important note is that ReasonRelay uses `React.Suspense` by default, which means that it'll suspend your component if the data's not already there.
+
 So all together, `Main.re` should look like this:
 
 ```ocaml
