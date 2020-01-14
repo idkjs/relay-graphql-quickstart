@@ -1,6 +1,10 @@
-# [RelayJS-Expirimental: A Step By Step Guide](https://relay.dev/docs/en/experimental/step-by-step)
+# Blog Posts
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## [Graphql-RelayJs-Experimental - Part 1 on dev.to](https://dev.to/idkjs/graphql-relay-experimental-in-js-part-1-5e4a)
+
+## [Graphql-ReasonRelay-Experimental - Part 2 on dev.to](https://dev.to/idkjs/graphql-reasonrelay-experimental-part-2-5fem)
+
+## [RelayJS-Expirimental: A Step By Step Guide](https://relay.dev/docs/en/experimental/step-by-step)
 
 ## Step 1: Create React App
 
