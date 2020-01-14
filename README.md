@@ -30,8 +30,9 @@ Create a file ./relay-js-quickstart/.env.local and add the following contents, r
 ```sh
 # relay-js-quickstart/.env.local
 REACT_APP_GITHUB_AUTH_TOKEN=<TOKEN>
-2.2: A fetchGraphQL Helper
 ```
+
+### 2.2: A fetchGraphQL Helper
 
 Next let's update the home screen of our app to show the name of the Relay repository. We'll start with a common approach to fetching data in React, calling our fetch function after the component mounts (note: later we'll see some limitations of this approach and a better alternative that works with React Concurrent Mode and Suspense). First we'll create a helper function to load data from the server. Again, this example will use the GitHub API, but feel free to replace it with the appropriate URL and authentication mechanism for your own GraphQL server:
 
